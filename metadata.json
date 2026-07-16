@@ -1,0 +1,6 @@
+{
+  "name": "Interactive Storybook",
+  "description": "A premium, emotional opening page for an interactive story, styled like a Pixar tale.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

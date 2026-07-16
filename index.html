@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Interactive Storybook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0A0A0A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #BBBBBB;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --safe-top: env(safe-area-inset-top, 47px);
+            --safe-bottom: env(safe-area-inset-bottom, 34px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(10, 10, 10, 0.6)), url('/20125529581350066.jpg');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Tajawal', system-ui, sans-serif;
+            color: var(--text-primary);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Particles Layer */
+        #particles-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Main Container for Smartphone Dimensions */
+        .screen-container {
+            position: relative;
+            width: 100%;
+            max-width: 430px; /* Max width to keep it sane on desktop */
+            height: 100%;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* Page Structure */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--safe-top) 24px calc(var(--safe-bottom) + 100px) 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .page.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Breathing Space Top */
+        .spacer-top {
+            flex-grow: 0.15;
+            min-height: 4vh;
+        }
+
+        /* Illustration */
+        .illustration-wrapper {
+            width: 100%;
+            height: 45vh;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255,255,255,0.08);
+            animation: float 6s ease-in-out infinite;
+            flex-shrink: 0;
+            background: #1a1a1a;
+        }
+
+        .illustration-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Text Section */
+        .text-container {
+            margin-top: 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            direction: rtl; /* Arabic text reading direction */
+        }
+
+        .main-title {
+            font-size: 34px;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            color: var(--text-primary);
+            opacity: 0;
+            transform: translateY(20px);
+            letter-spacing: -0.5px;
+        }
+
+        .page.active .main-title {
+            animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin: 0;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .page.active .subtitle {
+            animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+        }
+
+        .story-teaser {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin: 16px 0 0 0;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .page.active .story-teaser {
+            animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+        }
+
+        /* Story Box for Page 2 */
+        .story-box {
+            margin-top: 36px;
+            width: 100%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 28px 24px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            direction: rtl;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(24px);
+        }
+
+        .page.active .story-box {
+            animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+        }
+
+        .story-text {
+            font-size: 20px;
+            font-weight: 500;
+            line-height: 1.7;
+            color: var(--text-primary);
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Bottom Navigation */
+        .nav-bar {
+            position: fixed;
+            bottom: max(32px, var(--safe-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 48px);
+            max-width: calc(430px - 48px);
+            height: 74px;
+            border-radius: 24px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            z-index: 10;
+            direction: ltr; /* Keep buttons Left/Right layout as specified */
+        }
+
+        .nav-btn {
+            height: 58px;
+            border: none;
+            outline: none;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, opacity 0.3s;
+        }
+
+        .btn-prev {
+            background: transparent;
+            color: var(--text-primary);
+            padding: 0 24px;
+        }
+
+        .btn-next {
+            background: rgba(255, 255, 255, 0.95);
+            color: #0A0A0A;
+            padding: 0 32px;
+            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .btn-next:active {
+            transform: scale(0.92);
+            transition: transform 0.1s;
+        }
+
+        /* Modal / Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+            padding: 24px;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: rgba(20, 20, 20, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 32px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            direction: rtl;
+            transform: translateY(40px) scale(0.95);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-text {
+            font-size: 20px;
+            font-weight: 500;
+            line-height: 1.8;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .hide-nav .nav-bar {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-50%) translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        /* Countdown */
+        .countdown-container {
+            margin-top: 24px;
+            font-size: 32px;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-family: system-ui, -apple-system, sans-serif;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            text-align: center;
+        }
+        
+        .countdown-container.show {
+            opacity: 1;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(24px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Particle Background -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Main Content -->
+    <div class="screen-container">
+        
+        <!-- Page 1 -->
+        <div class="page active" id="page-1">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/68749288302.jpg" alt="A happy girl standing after finishing a long journey">
+            </div>
+
+            <div class="text-container">
+                <h1 class="main-title">مبرووووووككككك</h1>
+                <h2 class="subtitle">حلوتي... أخيراً عديتي ❤️</h2>
+                <p class="story-teaser">تعالي احكي لك قصة</p>
+            </div>
+        </div>
+
+        <!-- Page 2 -->
+        <div class="page" id="page-2">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/2.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">كان في بنوتة جميلة عندها هدف وكانت عايزة تثبت لنفسها قبل غيرها انها قد انها تحققه</p>
+            </div>
+        </div>
+
+        <!-- Page 3 -->
+        <div class="page" id="page-3">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/3.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">بدأت تذاكر وتعمل اللي تقدر عليه عشان تحقق الحلم</p>
+            </div>
+        </div>
+
+        <!-- Page 4 -->
+        <div class="page" id="page-4">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/4.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">قعدت تجتهد ورغم اللي فاتها الا انها ما استسلمت</p>
+            </div>
+        </div>
+
+        <!-- Page 5 -->
+        <div class="page" id="page-5">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/5.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">تعبت وسهرت وعافرت لانها كانت مقتنعة ان اللي عملوها مش اعلى منها</p>
+            </div>
+        </div>
+
+        <!-- Page 6 -->
+        <div class="page" id="page-6">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/7.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">رغم انها كانت لوحدها وما كان في حد يدعمها او يساندها</p>
+            </div>
+        </div>
+
+        <!-- Page 7 -->
+        <div class="page" id="page-7">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/8.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">لكنها كملت على نفس الطريق ليل ونهار لانها كانت مقتنعة ان ربنا مش  بيضيع تعبها</p>
+            </div>
+        </div>
+
+        <!-- Page 8 -->
+        <div class="page" id="page-8">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/6.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">ووقت الامتحانات ورغم صعوبتها الا انها كانت متمسكة بهدفها وكان عندها يقين بربها</p>
+            </div>
+        </div>
+
+        <!-- Page 9 -->
+        <div class="page" id="page-9">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/9.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">واخيرا ... البنوتة خلصت امتحاناتها واثبتت انها قوية بجد<br>ومصدر فخر حقيقي لينا</p>
+            </div>
+        </div>
+
+        <!-- Page 10 -->
+        <div class="page" id="page-10">
+            <div class="spacer-top"></div>
+            
+            <div class="illustration-wrapper">
+                <img src="/111111.png" alt="Story Illustration">
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">فخور بيكي</p>
+            </div>
+            
+            <div class="countdown-container" id="countdown-container">
+                <span id="countdown-text">5</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-btn btn-prev" id="btn-prev" onclick="prevPage()" disabled>Previous</button>
+        <button class="nav-btn btn-next" id="btn-next" onclick="nextPage()">Next &rarr;</button>
+    </div>
+
+    <!-- Popup Modal -->
+    <div class="modal-overlay" id="final-modal">
+        <div class="modal-content">
+            <p class="modal-text">طول عمري وعلى مر ال 19 سنة اللي عشتهم عمري ما فرحت لحد قد ما انا فرحان لك دلوقتي ، اثبتي انك قدوة وانا اول واحد بيقتدي بيها ، حلوتي ..مبروك الاجازة ، اجا الوقت الي اتمنيتي انه يجي ، اجا على خير الحمد لله ، استراحة  بسكوتة شطورة خلصت حربها وانتصرت فيها ، فرحان لك اوي ولسة كمان عقبال ما افرح  بنجاحك عن قريب  .. فخور بيكي يا لجين ... أبدعتي يا عيوني</p>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const totalPages = 10;
+        let popupTimeout = null;
+        let countdownInterval = null;
+
+        function updateNavigation() {
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+
+            btnPrev.disabled = currentPage === 1;
+            btnNext.disabled = currentPage === totalPages;
+        }
+
+        function switchPage(newPageIndex) {
+            if (navigator.vibrate) {
+                navigator.vibrate(15);
+            }
+            
+            // Remove active state from current page to trigger fade out
+            const oldPage = document.getElementById(`page-${currentPage}`);
+            if (oldPage) {
+                oldPage.classList.remove('active');
+                
+                // Force a reflow so animations can restart later if we go back and forth
+                void oldPage.offsetWidth; 
+            }
+
+            currentPage = newPageIndex;
+
+            // Add active state to new page to trigger fade in and content animations
+            const newPage = document.getElementById(`page-${currentPage}`);
+            if (newPage) {
+                newPage.classList.add('active');
+            }
+
+            updateNavigation();
+            
+            if (currentPage === totalPages) {
+                document.body.classList.add('hide-nav');
+                
+                const countdownContainer = document.getElementById('countdown-container');
+                const countdownText = document.getElementById('countdown-text');
+                
+                if (countdownContainer && countdownText) {
+                    countdownContainer.classList.add('show');
+                    let count = 5;
+                    countdownText.textContent = count;
+                    
+                    countdownInterval = setInterval(() => {
+                        count--;
+                        if (count > 0) {
+                            countdownText.textContent = count;
+                        } else {
+                            clearInterval(countdownInterval);
+                            countdownContainer.classList.remove('show');
+                        }
+                    }, 1000);
+                }
+
+                popupTimeout = setTimeout(() => {
+                    const modal = document.getElementById('final-modal');
+                    if (modal && currentPage === totalPages) {
+                        modal.classList.add('show');
+                    }
+                }, 5000);
+            } else {
+                document.body.classList.remove('hide-nav');
+                const modal = document.getElementById('final-modal');
+                if (modal) modal.classList.remove('show');
+                if (popupTimeout) clearTimeout(popupTimeout);
+                if (countdownInterval) clearInterval(countdownInterval);
+                const countdownContainer = document.getElementById('countdown-container');
+                if (countdownContainer) countdownContainer.classList.remove('show');
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                switchPage(currentPage + 1);
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                switchPage(currentPage - 1);
+            }
+        }
+
+        // --- Particle System for gentle atmosphere (stars/dust) ---
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        // Ensure canvas perfectly matches screen dimensions dynamically
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const particles = [];
+        const numParticles = 40;
+
+        for (let i = 0; i < numParticles; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 1.5 + 0.5, // Tiny particles
+                speedY: Math.random() * -0.2 - 0.1, // Float very slowly upwards
+                speedX: (Math.random() - 0.5) * 0.15, // Gentle horizontal drift
+                opacity: Math.random() * 0.5 + 0.1,
+                pulsate: (Math.random() * 0.015) + 0.005,
+                color: Math.random() > 0.85 ? '#FFD700' : '#FFFFFF' // Mostly white, some soft gold
+            });
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach(p => {
+                ctx.globalAlpha = p.opacity;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Movement
+                p.y += p.speedY;
+                p.x += p.speedX;
+
+                // Pulsate opacity for twinkling effect
+                p.opacity += p.pulsate;
+                if(p.opacity > 0.6 || p.opacity < 0.1) p.pulsate *= -1;
+
+                // Seamless vertical wrap
+                if (p.y < -10) {
+                    p.y = height + 10;
+                    p.x = Math.random() * width;
+                }
+                
+                // Seamless horizontal wrap
+                if (p.x < -10) {
+                    p.x = width + 10;
+                } else if (p.x > width + 10) {
+                    p.x = -10;
+                }
+            });
+
+            requestAnimationFrame(drawParticles);
+        }
+
+        // Start animation loop at 60 FPS natively via requestAnimationFrame
+        drawParticles();
+    </script>
+</body>
+</html>
